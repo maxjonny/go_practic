@@ -3,11 +3,11 @@ package requests
 import (
 	"encoding/json"
 	"log"
-	db "main/internal/database"
+	rep "main/internal/repository"
 	"net/http"
 )
 
-func GetUserData(w http.ResponseWriter, r *http.Request) {
+func GetUserData(w http.ResponseWriter, r *http.Request, db rep.RepositoryInterface) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -16,7 +16,7 @@ func GetUserData(w http.ResponseWriter, r *http.Request) {
 	device := r.PathValue("device")
 	index := r.PathValue("index")
 
-	user, err := db.Storage.Rep.User.GetUser(device, index)
+	user, err := db.User.GetUser(device, index)
 	if err != nil {
 		log.Println(err)
 	}

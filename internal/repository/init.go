@@ -1,9 +1,7 @@
 package repository
 
 import (
-	"github.com/redis/go-redis/v9"
-
-	"github.com/jackc/pgx/v5/pgxpool"
+	db "main/internal/database"
 )
 
 type RepositoryInterface struct {
@@ -11,9 +9,9 @@ type RepositoryInterface struct {
 	Device IDeviceRepository
 }
 
-func InitRepositoryInterface(pgPool *pgxpool.Pool, rClient *redis.Client) RepositoryInterface {
+func InitRepositoryInterface(s *db.Storage) RepositoryInterface {
 	return RepositoryInterface{
-		User:   NewUserRepository(pgPool, rClient),
-		Device: NewDeviceRepository(pgPool),
+		User:   NewUserRepository(s.Pg.Pool, s.Redis.Client),
+		Device: NewDeviceRepository(s.Pg.Pool),
 	}
 }

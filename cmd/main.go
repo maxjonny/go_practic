@@ -5,6 +5,7 @@ import (
 	db "main/internal/database"
 	"net/http"
 
+	rep "main/internal/repository"
 	t "main/internal/transport"
 
 	"github.com/joho/godotenv"
@@ -12,11 +13,17 @@ import (
 
 func main() {
 
+	//загрузка конфига
+	//создание бд
+	//создание интерфейсов
+	//создание роутера
+
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	db.InitStorage()
-	router := t.InitRouter()
+	storage := db.InitStorage()
+	storageInterface := rep.InitRepositoryInterface(storage)
+	router := t.InitRouter(storageInterface)
 
 	port := "8080"
 	if err := http.ListenAndServe(":"+port, router); err != nil {

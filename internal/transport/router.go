@@ -2,17 +2,20 @@ package transport
 
 import (
 	"encoding/json"
-	req "main/internal/requests"
+	rep "main/internal/repository"
+	handler "main/internal/requests"
 	"net/http"
 )
 
 type Router struct {
 	mux *http.ServeMux
+	rep rep.RepositoryInterface
 }
 
-func InitRouter() *Router {
+func InitRouter(storageInterface rep.RepositoryInterface) *Router {
 	router := Router{
 		mux: http.NewServeMux(),
+		rep: storageInterface,
 	}
 	router.SetupRoutes()
 	return &router
@@ -22,10 +25,18 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.mux.ServeHTTP(w, req)
 }
 
+func (r *Router) GetUserCount(w http.ResponseWriter, req *http.Request) {
+	handler.GetUserCount(w, req, r.rep)
+}
+
+func (r *Router) GetUserData(w http.ResponseWriter, req *http.Request) {
+	handler.GetUserData(w, req, r.rep)
+}
+
 func (r *Router) SetupRoutes() {
 
-	r.mux.HandleFunc("/checkbox/Z5/{device}/actionapi/User/GetUserCount", req.GetUserCount)
-	r.mux.HandleFunc("/checkbox/Z5/{device}/actionapi/User/GetUserData/{index}", req.GetUserData)
+	r.mux.HandleFunc("/checkbox/Z5/{device}/actionapi/User/GetUserCount", r.GetUserCount)
+	r.mux.HandleFunc("/checkbox/Z5/{device}/actionapi/User/GetUserData/{index}", r.GetUserData)
 
 	r.mux.HandleFunc("/checkbox/Z5/{device}/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodHead {
