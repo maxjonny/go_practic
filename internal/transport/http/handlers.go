@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"main/internal/repository"
+	"main/internal/service"
 	"net/http"
 )
 
@@ -13,11 +14,11 @@ var (
 )
 
 type Handler struct {
-	db repository.RepositoryInterface
+	service *service.Service
 }
 
 func InitHandlers(db repository.RepositoryInterface) *Handler {
-	return &Handler{db: db}
+	return &Handler{service: service.InitService(db)}
 }
 
 func (h *Handler) SendResponce(w http.ResponseWriter, data any, status Status) {
@@ -38,7 +39,11 @@ func (h *Handler) GetUserCount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	device := r.PathValue("device")
-	h.db.User.GetUser()
-	h.SendResponce(w, nil, Err)
+	count, err := h.service.GetUserCount(device)
+	if err != nil {
+		h.SendResponce(w, nil, Err)
+		return
+	}
+	h.SendResponce(w, count, Err)
 
 }

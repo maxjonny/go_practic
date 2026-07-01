@@ -1,21 +1,14 @@
 package service
 
 import (
-	"encoding/json"
 	"log"
 	m "main/internal/models"
-	"net/http"
 )
 
-func (s *Service) GetUserCount(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+func (s *Service) GetUserCount(device string) (int, error) {
 
 	var users []m.UserCard
 	var err error
-	device := r.PathValue("device")
 
 	nodeIds, err := s.rep.Device.GetActiveNode(device)
 	if err != nil {
@@ -34,7 +27,5 @@ func (s *Service) GetUserCount(w http.ResponseWriter, r *http.Request) {
 		s.rep.User.CreateCache(device, users)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(len(users))
+	return len(users), nil
 }
