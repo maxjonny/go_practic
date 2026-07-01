@@ -1,0 +1,14 @@
+@startuml
+CLient -> Transport : Request
+Transport -> CustomRequest: CR.Method(req)
+CustomRequest -> Repository: Rep1.Method1(req)
+Repository -> DB: Req
+Repository <- DB: Res
+CustomRequest <- Repository: Rep1.Method2(res)
+CustomRequest -> Repository: Rep2.Method1(req)
+Repository -> DB: Req
+Repository <- DB: Res
+CustomRequest <- Repository: Rep2.Method2(res)
+Transport <- CustomRequest: CR.Method(res)
+CLient <- Transport : Response
+@enduml
