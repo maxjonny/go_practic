@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	rep "main/internal/repository"
-	t "main/internal/transport"
+	api "main/internal/transport/http"
 
 	"github.com/joho/godotenv"
 )
@@ -23,7 +23,8 @@ func main() {
 	}
 	storage := db.InitStorage()
 	storageInterface := rep.InitRepositoryInterface(storage)
-	router := t.InitRouter(storageInterface)
+	handlers := api.InitHandlers(storageInterface)
+	router := api.InitRouter(handlers)
 
 	port := "8080"
 	if err := http.ListenAndServe(":"+port, router); err != nil {

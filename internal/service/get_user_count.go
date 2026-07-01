@@ -1,14 +1,13 @@
-package requests
+package service
 
 import (
 	"encoding/json"
 	"log"
 	m "main/internal/models"
-	rep "main/internal/repository"
 	"net/http"
 )
 
-func GetUserCount(w http.ResponseWriter, r *http.Request, db rep.RepositoryInterface) {
+func (s *Service) GetUserCount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -18,21 +17,21 @@ func GetUserCount(w http.ResponseWriter, r *http.Request, db rep.RepositoryInter
 	var err error
 	device := r.PathValue("device")
 
-	nodeIds, err := db.Device.GetActiveNode(device)
+	nodeIds, err := s.rep.Device.GetActiveNode(device)
 	if err != nil {
 		log.Println(err)
 	}
 
 	if len(nodeIds) > 0 {
-		users, err = db.User.GetUserByNodes(nodeIds)
+		users, err = s.rep.User.GetUserByNodes(nodeIds)
 		if err != nil {
 			log.Println(err)
 		}
 	}
 
 	if len(users) > 0 {
-		db.User.DropCache(device)
-		db.User.CreateCache(device, users)
+		s.rep.User.DropCache(device)
+		s.rep.User.CreateCache(device, users)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

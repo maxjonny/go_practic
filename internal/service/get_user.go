@@ -1,13 +1,12 @@
-package requests
+package service
 
 import (
 	"encoding/json"
 	"log"
-	rep "main/internal/repository"
 	"net/http"
 )
 
-func GetUserData(w http.ResponseWriter, r *http.Request, db rep.RepositoryInterface) {
+func (s *Service) GetUserData(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -16,7 +15,7 @@ func GetUserData(w http.ResponseWriter, r *http.Request, db rep.RepositoryInterf
 	device := r.PathValue("device")
 	index := r.PathValue("index")
 
-	user, err := db.User.GetUser(device, index)
+	user, err := s.rep.User.GetUser(device, index)
 	if err != nil {
 		log.Println(err)
 	}

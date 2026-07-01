@@ -1,9 +1,9 @@
-package transport
+package http
 
 import (
 	"encoding/json"
+	"fmt"
 	rep "main/internal/repository"
-	handler "main/internal/requests"
 	"net/http"
 )
 
@@ -14,8 +14,8 @@ type Router struct {
 func InitRouter(storageInterface rep.RepositoryInterface) *Router {
 	r := Router{http.NewServeMux()}
 
-	r.mux.HandleFunc("/checkbox/Z5/{device}/actionapi/User/GetUserCount", func(w http.ResponseWriter, r *http.Request) { handler.GetUserCount(w, r, storageInterface) })
-	r.mux.HandleFunc("/checkbox/Z5/{device}/actionapi/User/GetUserData/{index}", func(w http.ResponseWriter, r *http.Request) { handler.GetUserData(w, r, storageInterface) })
+	r.mux.HandleFunc("/checkbox/Z5/{device}/actionapi/User/GetUserCount", func(w http.ResponseWriter, r *http.Request) { fmt.Println() })
+	r.mux.HandleFunc("/checkbox/Z5/{device}/actionapi/User/GetUserData/{index}", func(w http.ResponseWriter, r *http.Request) { fmt.Println() })
 
 	r.mux.HandleFunc("/checkbox/Z5/{device}/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodHead {
