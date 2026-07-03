@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	pg "main/internal/database/postgres"
 	redis "main/internal/database/redis"
 )
@@ -11,13 +12,13 @@ type Storage struct {
 }
 
 func (s *Storage) CloseConnection() {
-	s.Pg.CloseConnecion()
-	s.Redis.CloseConnecion()
+	defer s.Pg.CloseConnecion()
+	defer s.Redis.CloseConnecion()
 }
 
-func InitStorage() *Storage {
+func InitStorage(ctx context.Context) *Storage {
 	db := Storage{}
-	db.Pg = pg.NewConnectPostgres()
-	db.Redis = redis.NewConnectRedis()
+	db.Pg = pg.NewConnectPostgres(ctx)
+	db.Redis = redis.NewConnectRedis(ctx)
 	return &db
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -12,7 +13,7 @@ type Redis struct {
 	Client *redis.Client
 }
 
-func (r *Redis) GetClient() {
+func (r *Redis) connect(ctx context.Context) {
 	ConnString := os.Getenv("REDIS_URL")
 
 	opt, err := redis.ParseURL(ConnString)
@@ -22,7 +23,10 @@ func (r *Redis) GetClient() {
 
 	r.Client = redis.NewClient(opt)
 
-	if err := r.Client.Ping(context.Background()).Err(); err != nil {
+	pingCtx, pingCancel := context.WithTimeout(ctx, 3*time.Second)
+	defer pingCancel()
+
+	if err := r.Client.Ping(pingCtx).Err(); err != nil {
 		log.Fatalf("Connection error %s", err)
 	}
 
@@ -33,8 +37,8 @@ func (p *Redis) CloseConnecion() {
 	log.Println("redis. Соединение закрыто")
 }
 
-func NewConnectRedis() Redis {
+func NewConnectRedis(ctx context.Context) Redis {
 	db := Redis{}
-	db.GetClient()
+	db.connect(ctx)
 	return db
 }
