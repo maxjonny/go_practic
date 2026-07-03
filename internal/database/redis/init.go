@@ -28,6 +28,10 @@ func (r *Redis) GetClient() {
 
 	log.Printf("connected to %s", ConnString)
 }
+func (p *Redis) CloseConnecion() {
+	p.Client.Close()
+	log.Println("redis. Соединение закрыто")
+}
 
 func NewConnectRedis() Redis {
 	db := Redis{}

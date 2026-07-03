@@ -10,6 +10,11 @@ type Storage struct {
 	Redis redis.Redis
 }
 
+func (s *Storage) CloseConnection() {
+	s.Pg.CloseConnecion()
+	s.Redis.CloseConnecion()
+}
+
 func InitStorage() *Storage {
 	db := Storage{}
 	db.Pg = pg.NewConnectPostgres()

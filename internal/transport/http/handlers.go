@@ -45,5 +45,29 @@ func (h *Handler) GetUserCount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.SendResponce(w, count, Err)
+}
 
+func (h *Handler) GetUserData(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		h.SendResponce(w, nil, Err)
+		return
+	}
+
+	device := r.PathValue("device")
+	index := r.URL.Query().Get("number")
+
+	count, err := h.service.GetUserData(device, index)
+	if err != nil {
+		h.SendResponce(w, nil, Err)
+		return
+	}
+	h.SendResponce(w, count, Err)
+
+}
+func (h *Handler) CheckConnect(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodHead {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

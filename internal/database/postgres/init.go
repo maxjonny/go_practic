@@ -30,6 +30,11 @@ func (p *Postgres) ConnectPool() {
 
 }
 
+func (p *Postgres) CloseConnecion() {
+	p.Pool.Close()
+	log.Println("psql. Соединение закрыто")
+}
+
 func NewConnectPostgres() Postgres {
 	db := Postgres{}
 	db.ConnectPool()

@@ -13,11 +13,6 @@ import (
 
 func main() {
 
-	//загрузка конфига
-	//создание бд
-	//создание интерфейсов
-	//создание роутера
-
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}
@@ -29,5 +24,9 @@ func main() {
 	port := "8080"
 	if err := http.ListenAndServe(":"+port, router); err != nil {
 		log.Fatalf("Ошибка запуска сервера: %v", err)
+	} else {
+		log.Printf("Сервер запущен на порту %s\n", port)
 	}
+
+	defer storage.CloseConnection()
 }
