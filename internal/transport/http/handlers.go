@@ -74,7 +74,14 @@ func (h *Handler) AddCardEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.AddCardEvent(r.Body)
+	var req UserCardDtoIn
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.SendResponce(w, "Invalid JSON", Err)
+		return
+	}
+
+	err := h.service.AddCardEvent()
 	if err != nil {
 		h.SendResponce(w, nil, Err)
 		return

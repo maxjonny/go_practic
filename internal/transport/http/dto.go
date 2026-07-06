@@ -1,5 +1,9 @@
 package http
 
+import m "main/internal/models"
+
+
+
 type UserCardDtoIn struct {
 	GID               string `json:"gID"`
 	Name              string `json:"name"`
@@ -13,3 +17,7 @@ type UserCardDtoIn struct {
 	CheckSerialNumber string `json:"checkSerialNumber"`
 	FaceFeature       string `json:"faceFeature,omitempty"`
 }
+
+func (u *UserCardDtoIn) ToModel {
+	return &{}
+} 
