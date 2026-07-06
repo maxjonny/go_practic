@@ -8,7 +8,7 @@ import (
 )
 
 type IDeviceRepository interface {
-	GetActiveNode(device string) ([]string, error)
+	GetActiveNode(ctx context.Context, device string) ([]string, error)
 }
 
 type DeviceRepository struct {
@@ -19,7 +19,7 @@ func NewDeviceRepository(pgPool *pgxpool.Pool) *DeviceRepository {
 	return &DeviceRepository{pgPool}
 }
 
-func (dr *DeviceRepository) GetActiveNode(device string) ([]string, error) {
+func (dr *DeviceRepository) GetActiveNode(ctx context.Context, device string) ([]string, error) {
 	nodes := make([]string, 0, 1)
 	queryString := fmt.Sprintf(`select
                                 (link.doc->>'node_id') as node_id
@@ -29,7 +29,7 @@ func (dr *DeviceRepository) GetActiveNode(device string) ([]string, error) {
                             WHERE (box.doc->>'equipmentModel') = '%s'
                                 and (link.doc->>'link_object') = 'project'
 								`, device)
-	rows, err := dr.pgPool.Query(context.Background(), queryString)
+	rows, err := dr.pgPool.Query(ctx, queryString)
 	if err != nil {
 		return nodes, err
 	}

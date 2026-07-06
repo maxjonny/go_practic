@@ -13,10 +13,10 @@ import (
 )
 
 type IUserRepository interface {
-	DropCache(device string)
-	CreateCache(device string, users []m.UserCard)
-	GetUser(device string, index string) (*m.UserCard, error)
-	GetUserByNodes(nodeIds []string) ([]m.UserCard, error)
+	DropCache(ctx context.Context, device string)
+	CreateCache(ctx context.Context, device string, users []m.UserCard)
+	GetUser(ctx context.Context, device string, index string) (*m.UserCard, error)
+	GetUserByNodes(ctx context.Context, nodeIds []string) ([]m.UserCard, error)
 }
 
 type UserRepository struct {
@@ -28,12 +28,11 @@ func NewUserRepository(pgPool *pgxpool.Pool, rClient *redis.Client) *UserReposit
 	return &UserRepository{pgPool, rClient}
 }
 
-func (ur *UserRepository) DropCache(device string) {
+func (ur *UserRepository) DropCache(ctx context.Context, device string) {
 
 	var cursor uint64
 	var keys []string
 
-	ctx := context.Background()
 	pattern := fmt.Sprintf("checkbox:%s:*", device)
 
 	for {
@@ -64,9 +63,8 @@ func (ur *UserRepository) DropCache(device string) {
 	}
 }
 
-func (ur *UserRepository) CreateCache(device string, users []m.UserCard) {
+func (ur *UserRepository) CreateCache(ctx context.Context, device string, users []m.UserCard) {
 
-	ctx := context.Background()
 	pipe := ur.rClient.Pipeline()
 
 	for ind, elem := range users {
@@ -81,8 +79,8 @@ func (ur *UserRepository) CreateCache(device string, users []m.UserCard) {
 	}
 }
 
-func (ur *UserRepository) GetUser(device string, index string) (*m.UserCard, error) {
-	ctx := context.Background()
+func (ur *UserRepository) GetUser(ctx context.Context, device string, index string) (*m.UserCard, error) {
+
 	key := fmt.Sprintf("checkbox:%s:%s", device, index)
 
 	data, err := ur.rClient.Get(ctx, key).Result()
@@ -99,8 +97,8 @@ func (ur *UserRepository) GetUser(device string, index string) (*m.UserCard, err
 	return &user, nil
 }
 
-func (ur *UserRepository) GetUserByNodes(nodeIds []string) ([]m.UserCard, error) {
-	nodes := make([]m.UserCard, 0, 1)
+func (ur *UserRepository) GetUserByNodes(ctx context.Context, nodeIds []string) ([]m.UserCard, error) {
+	nodes := make([]m.UserCard, 0)
 	queryString := fmt.Sprintf(`SELECT distinct
                                 (hc.doc->>'gID') as gID,
                                 (hc.doc->>'gZBH') as gZBH,
@@ -116,7 +114,8 @@ func (ur *UserRepository) GetUserByNodes(nodeIds []string) ([]m.UserCard, error)
                             AND tn.doc->>'status' = 'active' 
                             AND tnr.doc->>'status' = 'active';
 								`, strings.Join(nodeIds, "','"))
-	rows, err := ur.pgPool.Query(context.Background(), queryString)
+
+	rows, err := ur.pgPool.Query(ctx, queryString)
 	if err != nil {
 		return nodes, err
 	}

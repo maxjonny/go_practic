@@ -20,7 +20,6 @@ type Handler struct {
 func InitHandlers(db repository.RepositoryInterface) *Handler {
 	return &Handler{service: service.InitService(db)}
 }
-
 func (h *Handler) SendResponce(w http.ResponseWriter, data any, status Status) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status.Code())
@@ -31,7 +30,13 @@ func (h *Handler) SendResponce(w http.ResponseWriter, data any, status Status) {
 	}
 
 }
-
+func (h *Handler) CheckConnect(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodHead {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	w.WriteHeader(Ok.Code())
+}
 func (h *Handler) GetUserCount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		h.SendResponce(w, nil, Err)
@@ -39,14 +44,13 @@ func (h *Handler) GetUserCount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	device := r.PathValue("device")
-	count, err := h.service.GetUserCount(device)
+	count, err := h.service.GetUserCount(r.Context(), device)
 	if err != nil {
 		h.SendResponce(w, nil, Err)
 		return
 	}
-	h.SendResponce(w, count, Err)
+	h.SendResponce(w, count, Ok)
 }
-
 func (h *Handler) GetUserData(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		h.SendResponce(w, nil, Err)
@@ -56,18 +60,25 @@ func (h *Handler) GetUserData(w http.ResponseWriter, r *http.Request) {
 	device := r.PathValue("device")
 	index := r.URL.Query().Get("number")
 
-	count, err := h.service.GetUserData(device, index)
+	count, err := h.service.GetUserData(r.Context(), device, index)
 	if err != nil {
 		h.SendResponce(w, nil, Err)
 		return
 	}
-	h.SendResponce(w, count, Err)
+	h.SendResponce(w, count, Ok)
 
 }
-func (h *Handler) CheckConnect(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodHead {
+func (h *Handler) AddCardEvent(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+
+	err := h.service.AddCardEvent(r.Body)
+	if err != nil {
+		h.SendResponce(w, nil, Err)
+		return
+	}
+
+	w.WriteHeader(Ok.Code())
 }

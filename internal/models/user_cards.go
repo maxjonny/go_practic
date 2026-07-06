@@ -16,7 +16,3 @@ type UserCard struct {
 	FingerFeature string   `json:"fingerFeature"`
 	FaceFeature   string   `json:"faceFeature,omitempty"`
 }
-
-func (uc *UserCard) SeurchImg() {
-	//здесь логика поиска и трансформации фото в base64
-}

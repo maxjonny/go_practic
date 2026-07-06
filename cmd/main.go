@@ -4,12 +4,11 @@ import (
 	"context"
 	"log"
 	db "main/internal/database"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	rep "main/internal/repository"
 	api "main/internal/transport/http"
 
 	"github.com/joho/godotenv"
@@ -29,20 +28,17 @@ func main() {
 	}
 
 	storage := db.InitStorage(ctx)
-	defer storage.CloseConnection()
 
-	storageInterface := rep.InitRepositoryInterface(storage)
-	handlers := api.InitHandlers(storageInterface)
-	router := api.InitRouter(handlers)
-
-	port := "8080"
-
-	if err := http.ListenAndServe(":"+port, router); err != nil {
-		log.Fatalf("Ошибка запуска сервера: %v", err)
-	} else {
-		log.Printf("Сервер запущен на порту %s\n", port)
-	}
+	httpApp := api.CreateServer(storage)
+	httpApp.Run()
 
 	<-ctx.Done()
-	log.Println("Получен сигнал завершения, останавливаем сервер...")
+	log.Println("Остановка сервера, закрытие соеднений")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	httpApp.Stop(shutdownCtx)
+	storage.CloseConnection()
+
+	log.Println("Сервер остановлен")
 }
