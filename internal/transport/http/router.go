@@ -13,6 +13,7 @@ func InitRouter(handlers *Handler) *Router {
 
 	r.mux.HandleFunc("/checkbox/Z5/{device}/actionapi/User/GetUserCount", handlers.GetUserCount)
 	r.mux.HandleFunc("/checkbox/Z5/{device}/actionapi/User/GetUserData", handlers.GetUserData)
+	r.mux.HandleFunc("/checkbox/Z5/{device}/actionapi/User/UploadAlcohol", handlers.AddCardEvent)
 
 	r.mux.HandleFunc("/checkbox/Z5/{device}/", handlers.CheckConnect)
 	return &r

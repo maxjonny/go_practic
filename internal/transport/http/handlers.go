@@ -2,15 +2,18 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"main/internal/repository"
 	"main/internal/service"
+	"main/internal/transport/http/dto"
 	"net/http"
 )
 
 var (
 	Ok    Status = ResponceStatus{code: http.StatusOK, message: "success"}
 	Duble Status = ResponceStatus{code: http.StatusOK, message: "exists"}
-	Err   Status = ResponceStatus{code: http.StatusOK, message: "error"}
+	Err   Status = ResponceStatus{code: http.StatusBadRequest, message: "error"}
 )
 
 type Handler struct {
@@ -21,9 +24,10 @@ func InitHandlers(db repository.RepositoryInterface) *Handler {
 	return &Handler{service: service.InitService(db)}
 }
 func (h *Handler) SendResponce(w http.ResponseWriter, data any, status Status) {
+	fmt.Println(status)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status.Code())
-	if status.Code() != http.StatusOK {
+	if data == nil {
 		json.NewEncoder(w).Encode(status.Message())
 	} else {
 		json.NewEncoder(w).Encode(data)
@@ -74,18 +78,31 @@ func (h *Handler) AddCardEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req UserCardDtoIn
+	var req dto.EventDtoIn
+	ctx := r.Context()
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.SendResponce(w, "Invalid JSON", Err)
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		h.SendResponce(w, nil, Err)
+	}
+	defer r.Body.Close()
+
+	if err = json.Unmarshal(bodyBytes, &req); err != nil {
+		err = h.service.SaveErrEvent(ctx, bodyBytes)
+		if err != nil {
+			h.SendResponce(w, nil, Err)
+			return
+		}
+		h.SendResponce(w, nil, Duble)
 		return
 	}
 
-	err := h.service.AddCardEvent()
-	if err != nil {
+	event := req.ToServiceModel()
+
+	if err = h.service.AddCardEvent(ctx, event); err != nil {
 		h.SendResponce(w, nil, Err)
 		return
 	}
 
-	w.WriteHeader(Ok.Code())
+	h.SendResponce(w, nil, Ok)
 }
