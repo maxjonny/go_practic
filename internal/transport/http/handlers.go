@@ -87,7 +87,8 @@ func (h *Handler) AddCardEvent(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if err = json.Unmarshal(bodyBytes, &req); err != nil {
+	err = json.Unmarshal(bodyBytes, &req)
+	if err != nil || !req.IsValid() {
 		err = h.service.SaveErrEvent(ctx, bodyBytes)
 		if err != nil {
 			h.SendResponce(w, nil, Err)
@@ -99,8 +100,14 @@ func (h *Handler) AddCardEvent(w http.ResponseWriter, r *http.Request) {
 
 	event := req.ToServiceModel()
 
-	if err = h.service.AddCardEvent(ctx, event); err != nil {
+	isAded, err := h.service.AddCardEvent(event)
+	if err != nil {
 		h.SendResponce(w, nil, Err)
+		return
+	}
+
+	if !isAded {
+		h.SendResponce(w, nil, Duble)
 		return
 	}
 

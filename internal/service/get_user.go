@@ -8,7 +8,7 @@ import (
 
 func (s *Service) GetUserData(ctx context.Context, device string, index string) (*m.UserCard, error) {
 
-	user, err := s.rep.User.GetUser(ctx, device, index)
+	user, err := s.User.GetUser(ctx, device, index)
 	if err != nil {
 		log.Println(err)
 	}

@@ -20,6 +20,16 @@ type EventDtoIn struct {
 	FaceFeature       string `json:"faceFeature,omitempty"`
 }
 
+func (dto EventDtoIn) IsValid() bool {
+	return dto.GID != "" &&
+		dto.Name != "" &&
+		dto.CheckDate != "" &&
+		dto.CheckResult != "" &&
+		dto.AlcoholStrength != "" &&
+		dto.EquipmentModel != "" &&
+		dto.Authentication != ""
+}
+
 func (dto EventDtoIn) ToServiceModel() models.UserEvent {
 
 	var data []byte
