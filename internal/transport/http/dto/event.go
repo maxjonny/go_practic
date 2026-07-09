@@ -1,9 +1,8 @@
 package dto
 
 import (
-	"encoding/base64"
-	"log"
 	"main/internal/models"
+	"time"
 )
 
 type EventDtoIn struct {
@@ -20,10 +19,16 @@ type EventDtoIn struct {
 	FaceFeature       string `json:"faceFeature,omitempty"`
 }
 
-func (dto EventDtoIn) IsValid() bool {
+func (dto *EventDtoIn) IsValid() bool {
+
+	eventTime, err := time.ParseInLocation("2006/01/02 15:04:05", dto.CheckDate, time.Local)
+	if err != nil {
+		return false
+	}
+	dto.CheckDate = eventTime.Format("2006-01-02T15:04:05.000Z07:00")
+
 	return dto.GID != "" &&
 		dto.Name != "" &&
-		dto.CheckDate != "" &&
 		dto.CheckResult != "" &&
 		dto.AlcoholStrength != "" &&
 		dto.EquipmentModel != "" &&
@@ -31,26 +36,21 @@ func (dto EventDtoIn) IsValid() bool {
 }
 
 func (dto EventDtoIn) ToServiceModel() models.UserEvent {
-
-	var data []byte
-	var err error
-
-	if dto.FaceFeature != "" {
-		data, err = base64.StdEncoding.DecodeString(dto.FaceFeature)
-		if err != nil {
-			log.Printf("Ошибка декодирования фото: %s", dto.GID)
-		}
-	}
-
 	return models.UserEvent{
 		GID:               dto.GID,
-		ImgByte:           data,
 		Name:              dto.Name,
 		DeptName:          dto.DeptName,
 		IPAdress:          dto.IPAdress,
 		CheckDate:         dto.CheckDate,
+		FaceFeature:       dto.FaceFeature,
 		EventType:         "enter",
 		CheckSerialNumber: dto.CheckSerialNumber,
 		CheckResult:       dto.CheckResult,
+		EquipmentModel:    dto.EquipmentModel,
+		Authentication:    dto.Authentication,
+		AlcoholStrength:   dto.AlcoholStrength,
+		Img: models.HumanImg{
+			Path: "files/",
+		},
 	}
 }

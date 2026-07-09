@@ -17,7 +17,7 @@ func (s *Service) GetUserCount(ctx context.Context, device string) (int, error) 
 	}
 
 	if len(nodeIds) > 0 {
-		users, err = s.User.GetUserByNodes(ctx, nodeIds)
+		users, err = s.User.GetUsersByNodes(ctx, nodeIds)
 		if err != nil {
 			log.Println(err)
 		}

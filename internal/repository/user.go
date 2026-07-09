@@ -3,11 +3,13 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	m "main/internal/models"
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 )
@@ -16,7 +18,9 @@ type IUserRepository interface {
 	DropCache(ctx context.Context, device string)
 	CreateCache(ctx context.Context, device string, users []m.UserCard)
 	GetUser(ctx context.Context, device string, index string) (*m.UserCard, error)
-	GetUserByNodes(ctx context.Context, nodeIds []string) ([]m.UserCard, error)
+	GetUsersByNodes(ctx context.Context, nodeIds []string) ([]m.UserCard, error)
+	GetUserRelations(ctx context.Context, userGid string) (UserRelations, error)
+	GetWorkerId(ctx context.Context, cardId int, projectId int) (int, error)
 }
 
 type UserRepository struct {
@@ -97,7 +101,7 @@ func (ur *UserRepository) GetUser(ctx context.Context, device string, index stri
 	return &user, nil
 }
 
-func (ur *UserRepository) GetUserByNodes(ctx context.Context, nodeIds []string) ([]m.UserCard, error) {
+func (ur *UserRepository) GetUsersByNodes(ctx context.Context, nodeIds []string) ([]m.UserCard, error) {
 	nodes := make([]m.UserCard, 0)
 	queryString := fmt.Sprintf(`SELECT distinct
                                 (hc.doc->>'gID') as gID,
@@ -130,4 +134,46 @@ func (ur *UserRepository) GetUserByNodes(ctx context.Context, nodeIds []string) 
 		nodes = append(nodes, user)
 	}
 	return nodes, nil
+}
+
+func (ur *UserRepository) GetUserRelations(ctx context.Context, userGid string) (UserRelations, error) {
+
+	var userRelatuin UserRelations
+
+	queryString := `select 
+						hc.id as card_id,
+						array_agg(distinct node::int)as nodes
+					from checkbox.human_card hc
+					left join tabel.tree_node_resource tnr on (tnr.doc->>'resource_id') = (hc.doc->>'human_id') and (tnr.doc->>'status') = 'active'
+						left join "structure".tree_nodes tn on tn.id = (tnr.doc->>'tree_node_id')::int and (tn.doc->>'status') = 'active'
+						left join lateral unnest(string_to_array(tn.doc->>'path', '-')) as node on true
+					where (hc.doc->>'gID') = $1
+					group by hc.id`
+
+	err := ur.pgPool.QueryRow(ctx, queryString, userGid).Scan(&userRelatuin.UserCardId, &userRelatuin.NodeIds)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = nil
+		}
+	}
+
+	return userRelatuin, err
+}
+
+func (ur *UserRepository) GetWorkerId(ctx context.Context, cardId int, projectId int) (int, error) {
+
+	var workerId int
+
+	queryString := `select id from checkbox.workers
+					where (doc->>'human_card_id')::int = $1 and (doc->>'project_id')::int = $2`
+
+	err := ur.pgPool.QueryRow(ctx, queryString, cardId, projectId).Scan(&workerId)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = nil
+		}
+	}
+
+	return workerId, err
 }

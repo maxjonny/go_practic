@@ -102,6 +102,7 @@ func (h *Handler) AddCardEvent(w http.ResponseWriter, r *http.Request) {
 
 	isAded, err := h.service.AddCardEvent(event)
 	if err != nil {
+		fmt.Println(err)
 		h.SendResponce(w, nil, Err)
 		return
 	}
