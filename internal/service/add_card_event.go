@@ -14,9 +14,7 @@ import (
 	"time"
 )
 
-func (s *Service) AddCardEvent(event models.UserEvent) (bool, error) {
-
-	ctx := context.Background()
+func (s *Service) AddCardEvent(ctx context.Context, event models.UserEvent) (bool, error) {
 
 	isFounded, err := s.Event.CheckDouble(ctx, event.CheckDate, event.EquipmentModel)
 	if err != nil || !isFounded {
@@ -73,6 +71,7 @@ func (s *Service) AddCardEvent(event models.UserEvent) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	fmt.Println("deviceRel", deviceRel)
 
 	if len(deviceRel) == 0 {
 		return false, fmt.Errorf("Модель %s не привязяна к проекту\n", event.EquipmentModel)
@@ -87,6 +86,7 @@ func (s *Service) AddCardEvent(event models.UserEvent) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	fmt.Println("userRel", userRel)
 
 	var eventProjects []int
 	for _, node := range userRel.NodeIds {
@@ -100,9 +100,29 @@ func (s *Service) AddCardEvent(event models.UserEvent) (bool, error) {
 		eventProjects = slices.Collect(maps.Values(mapProject))
 	}
 
-	if userRel.UserCardId == 0 {
-		//Создание карточки
-		//userRel.UserCardId от новой карты
+	if userRel.UserCardId == 0 && event.GID != "GIDГость" {
+		runes := []rune(event.GID)
+		user := models.UserCard{
+			GID:        event.GID,
+			Img:        event.Img,
+			GZBH:       string(runes[3:]),
+			Name:       event.Name,
+			DeptName:   event.DeptName,
+			FromDevice: true,
+		}
+
+		resordId, log, err := s.Common.AddModel("checkbox.human_card", user)
+		if err != nil {
+			return false, err
+		} else {
+			log.Doc.CreateDate = currentDate
+		}
+		_, err = s.Common.AddHistoryPg(log)
+		if err != nil {
+			return false, err
+		}
+
+		userRel.UserCardId = resordId
 	}
 
 	event.HumanCardId = userRel.UserCardId
@@ -141,15 +161,17 @@ func (s *Service) AddCardEvent(event models.UserEvent) (bool, error) {
 		}
 
 		if workerId == 0 {
-			_, log, err := s.Common.AddModel("checkbox.workers", worker)
-			if err != nil {
-				return false, err
-			} else {
-				log.Doc.CreateDate = currentDate
-			}
+			if userRel.UserCardId != 0 {
+				_, log, err := s.Common.AddModel("checkbox.workers", worker)
+				if err != nil {
+					return false, err
+				} else {
+					log.Doc.CreateDate = currentDate
+				}
 
-			if _, err := s.Common.AddHistoryPg(log); err != nil {
-				return false, err
+				if _, err := s.Common.AddHistoryPg(log); err != nil {
+					return false, err
+				}
 			}
 		} else {
 			_, log, err := s.Common.UpdatePg("checkbox.workers", workerId, worker)

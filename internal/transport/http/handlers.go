@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -78,8 +79,8 @@ func (h *Handler) AddCardEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := context.Background()
 	var req dto.EventDtoIn
-	ctx := r.Context()
 
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -100,7 +101,7 @@ func (h *Handler) AddCardEvent(w http.ResponseWriter, r *http.Request) {
 
 	event := req.ToServiceModel()
 
-	isAded, err := h.service.AddCardEvent(event)
+	isAded, err := h.service.AddCardEvent(ctx, event)
 	if err != nil {
 		fmt.Println(err)
 		h.SendResponce(w, nil, Err)
@@ -113,4 +114,45 @@ func (h *Handler) AddCardEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.SendResponce(w, nil, Ok)
+}
+
+func (h *Handler) UploadUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	h.SendResponce(w, nil, Duble)
+
+	// var req dto.UserDtoIn
+	// ctx := context.Background()
+
+	// bodyBytes, err := io.ReadAll(r.Body)
+	// if err != nil {
+	// 	h.SendResponce(w, nil, Err)
+	// }
+	// defer r.Body.Close()
+
+	// err = json.Unmarshal(bodyBytes, &req)
+	// if err != nil || !req.IsValid() {
+	// 	fmt.Println(err, req.IsValid())
+	// 	h.SendResponce(w, nil, Duble)
+	// 	return
+	// }
+
+	// user := req.ToServiceModel()
+
+	// isAded, err := h.service.UpsertUser(ctx, user)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	h.SendResponce(w, nil, Err)
+	// 	return
+	// }
+
+	// if !isAded {
+	// 	h.SendResponce(w, nil, Duble)
+	// 	return
+	// }
+
+	//h.SendResponce(w, nil, Ok)
 }

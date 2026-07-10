@@ -17,10 +17,12 @@ import (
 type IUserRepository interface {
 	DropCache(ctx context.Context, device string)
 	CreateCache(ctx context.Context, device string, users []m.UserCard)
-	GetUser(ctx context.Context, device string, index string) (*m.UserCard, error)
+	GetUserCache(ctx context.Context, device string, index string) (*m.UserCard, error)
+
 	GetUsersByNodes(ctx context.Context, nodeIds []string) ([]m.UserCard, error)
 	GetUserRelations(ctx context.Context, userGid string) (UserRelations, error)
 	GetWorkerId(ctx context.Context, cardId int, projectId int) (int, error)
+	GetByGid(ctx context.Context, gID string) (int, m.UserCard, error)
 }
 
 type UserRepository struct {
@@ -83,7 +85,7 @@ func (ur *UserRepository) CreateCache(ctx context.Context, device string, users 
 	}
 }
 
-func (ur *UserRepository) GetUser(ctx context.Context, device string, index string) (*m.UserCard, error) {
+func (ur *UserRepository) GetUserCache(ctx context.Context, device string, index string) (*m.UserCard, error) {
 
 	key := fmt.Sprintf("checkbox:%s:%s", device, index)
 
@@ -142,7 +144,7 @@ func (ur *UserRepository) GetUserRelations(ctx context.Context, userGid string) 
 
 	queryString := `select 
 						hc.id as card_id,
-						array_agg(distinct node::int)as nodes
+						COALESCE(array_agg(distinct node::int) FILTER (WHERE node IS NOT NULL), '{}') as nodes
 					from checkbox.human_card hc
 					left join tabel.tree_node_resource tnr on (tnr.doc->>'resource_id') = (hc.doc->>'human_id') and (tnr.doc->>'status') = 'active'
 						left join "structure".tree_nodes tn on tn.id = (tnr.doc->>'tree_node_id')::int and (tn.doc->>'status') = 'active'
@@ -176,4 +178,30 @@ func (ur *UserRepository) GetWorkerId(ctx context.Context, cardId int, projectId
 	}
 
 	return workerId, err
+}
+
+func (ur *UserRepository) GetByGid(ctx context.Context, gID string) (int, m.UserCard, error) {
+
+	var cardId int
+	var user m.UserCard
+
+	queryString := `select id, doc->>'gID', doc->'img'->>'name',doc->'img'->>'path',
+						doc->>'gZBH', doc->>'name', doc->>'deptName',doc->'human_id',(doc->>'fromDevice')::bool,doc->>'fingerFeature'
+					from checkbox.human_card hc where doc->>'gID' = $1`
+
+	rows, err := ur.pgPool.Query(ctx, queryString, gID)
+	if err != nil {
+		return cardId, user, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err = rows.Scan(&cardId, &user.GID, &user.Img.Name, &user.Img.Path, &user.GZBH, &user.Name, &user.DeptName, &user.HumanID, &user.FromDevice, &user.FingerFeature)
+		if err != nil {
+			return cardId, user, err
+		}
+	}
+	fmt.Println("GetId", user)
+
+	return cardId, user, nil
 }
