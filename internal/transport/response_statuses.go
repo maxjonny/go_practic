@@ -1,4 +1,4 @@
-package http
+package transport
 
 type ResponceStatus struct {
 	code    int

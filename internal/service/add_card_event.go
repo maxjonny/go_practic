@@ -36,8 +36,7 @@ func (s *Service) AddCardEvent(ctx context.Context, event models.UserEvent) (boo
 		fileName = strconv.FormatInt(time.Now().UnixMilli(), 10) + "_checkbox.jpeg"
 		sizeKbytes, err = s.SaveJpeg(fileName, data)
 		if err != nil {
-			log.Printf("Ошибка сохранения фото. %s\n", err)
-			return false, err
+			return false, fmt.Errorf("SaveJpeg: %w", err)
 		} else {
 
 			fileLog := pkg.FileInfo{
@@ -52,13 +51,13 @@ func (s *Service) AddCardEvent(ctx context.Context, event models.UserEvent) (boo
 
 			_, log, err := s.Common.AddModel("main.files", fileLog)
 			if err != nil {
-				return false, err
+				return false, fmt.Errorf("AddModel: %w", err)
 			} else {
 				log.Doc.CreateDate = currentDate
 			}
 
 			if _, err := s.Common.AddHistoryPg(log); err != nil {
-				return false, err
+				return false, fmt.Errorf("AddHistoryPg: %w", err)
 			}
 			event.FaceFeature = ""
 		}
@@ -69,9 +68,8 @@ func (s *Service) AddCardEvent(ctx context.Context, event models.UserEvent) (boo
 
 	deviceRel, err := s.Device.GetDeviceRelations(ctx, event.EquipmentModel)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("GetDeviceRelations: %s: %w", event.EquipmentModel, err)
 	}
-	fmt.Println("deviceRel", deviceRel)
 
 	if len(deviceRel) == 0 {
 		return false, fmt.Errorf("Модель %s не привязяна к проекту\n", event.EquipmentModel)
@@ -84,9 +82,8 @@ func (s *Service) AddCardEvent(ctx context.Context, event models.UserEvent) (boo
 
 	userRel, err := s.User.GetUserRelations(ctx, event.GID)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("GetUserRelations: %s: %w", event.GID, err)
 	}
-	fmt.Println("userRel", userRel)
 
 	var eventProjects []int
 	for _, node := range userRel.NodeIds {
@@ -113,13 +110,13 @@ func (s *Service) AddCardEvent(ctx context.Context, event models.UserEvent) (boo
 
 		resordId, log, err := s.Common.AddModel("checkbox.human_card", user)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("AddModel: %w", err)
 		} else {
 			log.Doc.CreateDate = currentDate
 		}
 		_, err = s.Common.AddHistoryPg(log)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("AddHistoryPg: %w", err)
 		}
 
 		userRel.UserCardId = resordId
@@ -132,18 +129,18 @@ func (s *Service) AddCardEvent(ctx context.Context, event models.UserEvent) (boo
 		event.ProjectId = project_id
 		_, log, err := s.Common.AddModel("checkbox.human_events", event)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("AddModel: %w", err)
 		} else {
 			log.Doc.CreateDate = currentDate
 		}
 
 		if _, err := s.Common.AddHistoryPg(log); err != nil {
-			return false, err
+			return false, fmt.Errorf("AddHistoryPg: %w", err)
 		}
 
 		workerId, err := s.User.GetWorkerId(ctx, event.HumanCardId, event.ProjectId)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("GetWorkerId: %w", err)
 		}
 
 		worker := repository.WorkerStatus{
@@ -164,25 +161,25 @@ func (s *Service) AddCardEvent(ctx context.Context, event models.UserEvent) (boo
 			if userRel.UserCardId != 0 {
 				_, log, err := s.Common.AddModel("checkbox.workers", worker)
 				if err != nil {
-					return false, err
+					return false, fmt.Errorf("AddModel: %w", err)
 				} else {
 					log.Doc.CreateDate = currentDate
 				}
 
 				if _, err := s.Common.AddHistoryPg(log); err != nil {
-					return false, err
+					return false, fmt.Errorf("AddHistoryPg: %w", err)
 				}
 			}
 		} else {
 			_, log, err := s.Common.UpdatePg("checkbox.workers", workerId, worker)
 			if err != nil {
-				return false, err
+				return false, fmt.Errorf("UpdatePg: %w", err)
 			} else {
 				log.Doc.CreateDate = currentDate
 			}
 
 			if _, err := s.Common.AddHistoryPg(log); err != nil {
-				return false, err
+				return false, fmt.Errorf("AddHistoryPg: %w", err)
 			}
 		}
 	}

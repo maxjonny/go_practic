@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -24,10 +23,9 @@ func NewEventRepository(pgPool *pgxpool.Pool) *EventRepository {
 func (er *EventRepository) SaveErrEvent(ctx context.Context, event []byte) error {
 
 	eventStr := string(event)
-	queryString := fmt.Sprintf(`insert into checkbox.err_events (doc) values ('%s')
-		`, eventStr)
+	queryString := `insert into checkbox.err_events (doc) values ($1)`
 
-	rows, err := er.pgPool.Query(ctx, queryString)
+	rows, err := er.pgPool.Query(ctx, queryString, eventStr)
 	if err != nil {
 		log.Println("Ошибака сохранения в сheckbox.err_events")
 		return err
@@ -39,12 +37,11 @@ func (er *EventRepository) SaveErrEvent(ctx context.Context, event []byte) error
 
 func (er *EventRepository) CheckDouble(ctx context.Context, checkDate string, equipmentModel string) (bool, error) {
 
-	queryString := fmt.Sprintf(`SELECT count(*) as cnt FROM checkbox.human_events
-                                    WHERE doc->>'checkDate' = '%s' and doc->>'equipmentModel' = '%s'`,
-		checkDate, equipmentModel)
+	queryString := `SELECT count(*) as cnt FROM checkbox.human_events
+                                    WHERE doc->>'checkDate' = $1 and doc->>'equipmentModel' = $2`
 
 	var recordsCount int
-	err := er.pgPool.QueryRow(ctx, queryString).Scan(&recordsCount)
+	err := er.pgPool.QueryRow(ctx, queryString, checkDate, equipmentModel).Scan(&recordsCount)
 	if err != nil {
 		log.Println("Ошибака чтения из сheckbox.human_events")
 	}

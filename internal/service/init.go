@@ -35,3 +35,13 @@ func (s *Service) SaveJpeg(imgName string, imgBytes []byte) (int, error) {
 	}
 	return fileSizeInKB, err
 }
+
+func (s *Service) LoadJpeg(imgName string) ([]byte, error) {
+
+	filePath := "./upload_files/" + imgName
+	imgBytes, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return imgBytes, nil
+}

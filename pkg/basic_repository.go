@@ -33,10 +33,9 @@ func (br *BasicRepository) AddHistoryPg(Record models.History) (int, error) {
 		return ReturningId, err
 	}
 
-	queryString := fmt.Sprintf(`INSERT INTO main.history (doc, source) VALUES ('%s', '%s') RETURNING id`,
-		string(docByte), Record.Source)
+	queryString := `INSERT INTO main.history (doc, source) VALUES ($1, $2) RETURNING id`
 
-	err = br.pgPool.QueryRow(context.Background(), queryString).Scan(&ReturningId)
+	err = br.pgPool.QueryRow(context.Background(), queryString, string(docByte), Record.Source).Scan(&ReturningId)
 	if err != nil {
 		log.Printf("Ошибка сохранения истории, %s", err)
 	}
@@ -52,10 +51,10 @@ func (br *BasicRepository) AddModel(table string, Record any) (id int, historyLo
 		return
 	}
 
-	queryString := fmt.Sprintf(`INSERT INTO %s (doc) VALUES ('%s') RETURNING id`,
-		table, string(docByte))
+	queryString := fmt.Sprintf(`INSERT INTO %s (doc) VALUES ($1) RETURNING id`,
+		table)
 
-	err = br.pgPool.QueryRow(context.Background(), queryString).Scan(&id)
+	err = br.pgPool.QueryRow(context.Background(), queryString, string(docByte)).Scan(&id)
 	if err != nil {
 		log.Printf("Ошибка сохранения истории, %s", err)
 	}

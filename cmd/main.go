@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	api "main/internal/transport/http"
+	api "main/internal/transport"
 
 	"github.com/joho/godotenv"
 )

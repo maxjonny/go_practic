@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	m "main/internal/models"
-	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -61,11 +60,10 @@ func (ur *UserRepository) DropCache(ctx context.Context, device string) {
 
 	// Удаляем все найденные ключи
 	if len(keys) > 0 {
-		deleted, err := ur.rClient.Unlink(ctx, keys...).Result()
+		_, err := ur.rClient.Unlink(ctx, keys...).Result()
 		if err != nil {
 			fmt.Printf("ошибка удаления: %s", err)
 		}
-		fmt.Printf("Удалено %d ключей по шаблону '%s'\n", deleted, pattern)
 	}
 }
 
@@ -105,7 +103,7 @@ func (ur *UserRepository) GetUserCache(ctx context.Context, device string, index
 
 func (ur *UserRepository) GetUsersByNodes(ctx context.Context, nodeIds []string) ([]m.UserCard, error) {
 	nodes := make([]m.UserCard, 0)
-	queryString := fmt.Sprintf(`SELECT distinct
+	queryString := `SELECT distinct
                                 (hc.doc->>'gID') as gID,
                                 (hc.doc->>'gZBH') as gZBH,
                                 (hc.doc->>'name') as name,
@@ -116,12 +114,11 @@ func (ur *UserRepository) GetUsersByNodes(ctx context.Context, nodeIds []string)
                             FROM structure.tree_nodes tn 
                             INNER JOIN tabel.tree_node_resource tnr ON tn.id = (tnr.doc->>'tree_node_id')::int
                             INNER JOIN checkbox.human_card hc ON (hc.doc->>'human_id')::int = (tnr.doc->>'resource_id')::int
-                            WHERE string_to_array(tn.doc->>'path', '-') && array['%s'] 
+                            WHERE string_to_array(tn.doc->>'path', '-') && $1 
                             AND tn.doc->>'status' = 'active' 
-                            AND tnr.doc->>'status' = 'active';
-								`, strings.Join(nodeIds, "','"))
+                            AND tnr.doc->>'status' = 'active';`
 
-	rows, err := ur.pgPool.Query(ctx, queryString)
+	rows, err := ur.pgPool.Query(ctx, queryString, nodeIds)
 	if err != nil {
 		return nodes, err
 	}

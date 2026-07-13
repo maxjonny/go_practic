@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -10,6 +11,7 @@ import (
 type IDeviceRepository interface {
 	GetActiveNode(ctx context.Context, device string) ([]string, error)
 	GetDeviceRelations(ctx context.Context, device string) ([]DeviceRelations, error)
+	UpdateConnection(ctx context.Context, device string, datetime string) error
 }
 
 type DeviceRepository struct {
@@ -22,15 +24,15 @@ func NewDeviceRepository(pgPool *pgxpool.Pool) *DeviceRepository {
 
 func (dr *DeviceRepository) GetActiveNode(ctx context.Context, device string) ([]string, error) {
 	nodes := make([]string, 0, 1)
-	queryString := fmt.Sprintf(`select
+	queryString := `select
                                 (link.doc->>'node_id') as node_id
                             FROM checkbox.boxes box
                               inner join checkbox.box_relation br on (br.doc->> 'box_id')::int = box.id
                               inner join structure.link_nodes link on (link.doc->>'link_object_id') = (br.doc->>'project_id')
-                            WHERE (box.doc->>'equipmentModel') = '%s'
+                            WHERE (box.doc->>'equipmentModel') = $1
                                 and (link.doc->>'link_object') = 'project'
-								`, device)
-	rows, err := dr.pgPool.Query(ctx, queryString)
+								`
+	rows, err := dr.pgPool.Query(ctx, queryString, device)
 	if err != nil {
 		return nodes, err
 	}
@@ -74,4 +76,21 @@ func (dr *DeviceRepository) GetDeviceRelations(ctx context.Context, device strin
 	}
 
 	return allRelations, nil
+}
+
+func (dr *DeviceRepository) UpdateConnection(ctx context.Context, device string, datetime string) error {
+
+	var returningId int
+
+	queryString := `UPDATE checkbox.boxes
+					SET doc = jsonb_set(doc, '{last_connection}', $1, true)
+					WHERE (doc->>'equipmentModel') = $2 returning id`
+
+	err := dr.pgPool.QueryRow(ctx, queryString, fmt.Sprintf(`"%s"`, datetime), device).Scan(&returningId)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
 }

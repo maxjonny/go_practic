@@ -1,4 +1,4 @@
-package http
+package transport
 
 import (
 	"context"
@@ -20,7 +20,7 @@ func CreateServer(storage *database.Storage) *server {
 
 	return &server{
 		server: &http.Server{
-			Addr:    ":8080",
+			Addr:    ":4010",
 			Handler: router,
 		},
 	}
