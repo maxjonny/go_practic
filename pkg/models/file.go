@@ -1,7 +1,5 @@
 package models
 
-import "time"
-
 type FileInfo struct {
 	CreateDate      string `json:"create_date"`
 	AccountId       int    `json:"account_id"`
@@ -11,11 +9,4 @@ type FileInfo struct {
 	MimeType        string `json:"mime_type"`
 	SizeKbyte       int    `json:"size_kbyte"`
 	Path            string `json:"path"`
-}
-
-func (f *FileInfo) AddCurrentTime() {
-	layout := "2006-01-02T15:04:05.000Z07:00"
-	currentDate := time.Now().UTC().Format(layout)
-
-	f.CreateDate = currentDate
 }

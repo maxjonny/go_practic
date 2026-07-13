@@ -24,6 +24,7 @@ type Handler struct {
 func InitHandlers(db repository.RepositoryInterface) *Handler {
 	return &Handler{service: service.InitService(db)}
 }
+
 func (h *Handler) SendResponce(w http.ResponseWriter, data any, status Status) {
 	fmt.Println(status)
 	w.Header().Set("Content-Type", "application/json")
@@ -35,18 +36,12 @@ func (h *Handler) SendResponce(w http.ResponseWriter, data any, status Status) {
 	}
 
 }
+
 func (h *Handler) CheckConnect(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodHead {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	w.WriteHeader(Ok.Code())
 }
+
 func (h *Handler) GetUserCount(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		h.SendResponce(w, nil, Err)
-		return
-	}
 
 	device := r.PathValue("device")
 	count, err := h.service.GetUserCount(r.Context(), device)
@@ -56,11 +51,8 @@ func (h *Handler) GetUserCount(w http.ResponseWriter, r *http.Request) {
 	}
 	h.SendResponce(w, count, Ok)
 }
+
 func (h *Handler) GetUserData(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		h.SendResponce(w, nil, Err)
-		return
-	}
 
 	device := r.PathValue("device")
 	index := r.URL.Query().Get("number")
@@ -73,11 +65,8 @@ func (h *Handler) GetUserData(w http.ResponseWriter, r *http.Request) {
 	h.SendResponce(w, count, Ok)
 
 }
+
 func (h *Handler) AddCardEvent(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 
 	ctx := context.Background()
 	var req dto.EventDtoIn
@@ -117,10 +106,6 @@ func (h *Handler) AddCardEvent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UploadUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 
 	h.SendResponce(w, nil, Duble)
 

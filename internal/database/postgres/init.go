@@ -29,7 +29,7 @@ func (p *Postgres) connect(ctx context.Context) {
 	defer pingCancel()
 
 	if err := dbpool.Ping(pingCtx); err != nil {
-		dbpool.Close() // не забываем закрыть пул при ошибке
+		dbpool.Close()
 	}
 
 	p.Pool = dbpool

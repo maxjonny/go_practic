@@ -1,35 +1,23 @@
 package http
 
 import (
-	"net/http"
+	"github.com/go-chi/chi/v5"
 )
 
-type Router struct {
-	mux *http.ServeMux
+func InitRouter(handlers *Handler) *chi.Mux {
+	r := chi.NewRouter()
+
+	r.Route("/checkbox/Z5/", func(r chi.Router) {
+
+		r.Use(UpdateConnect)
+
+		r.Get("{device}/actionapi/User/GetUserCount", handlers.GetUserCount)
+		r.Get("{device}/actionapi/User/GetUserData", handlers.GetUserData)
+		r.Post("{device}/actionapi/User/UploadAlcohol", handlers.AddCardEvent)
+		r.Post("{device}/actionapi/User/UploadUser", handlers.UploadUser)
+
+		r.Head("/", handlers.CheckConnect)
+	})
+
+	return r
 }
-
-func InitRouter(handlers *Handler) *Router {
-	r := Router{http.NewServeMux()}
-
-	r.mux.Handle("/checkbox/Z5/{device}/actionapi/User/GetUserCount", r.with(handlers.GetUserCount, UpdateConnect))
-	r.mux.Handle("/checkbox/Z5/{device}/actionapi/User/GetUserData", r.with(handlers.GetUserData))
-	r.mux.Handle("/checkbox/Z5/{device}/actionapi/User/UploadAlcohol", r.with(handlers.AddCardEvent, UpdateConnect))
-	r.mux.Handle("/checkbox/Z5/{device}/actionapi/User/UploadUser", r.with(handlers.UploadUser))
-
-	r.mux.Handle("/checkbox/Z5/{device}/", r.with(handlers.CheckConnect))
-	return &r
-}
-
-func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	r.mux.ServeHTTP(w, req)
-}
-
-func (r *Router) with(h http.HandlerFunc, middlewares ...func(http.Handler) http.Handler) http.Handler {
-	var finalHandler http.Handler = http.HandlerFunc(h)
-	for i := len(middlewares) - 1; i >= 0; i-- {
-		finalHandler = middlewares[i](finalHandler)
-	}
-	return finalHandler
-}
-
-//mux.HandleFunc("GET /users", myHandler)
