@@ -11,7 +11,7 @@ func (s *Service) GetUserData(ctx context.Context, device string, index string) 
 
 	user, err := s.User.GetUserCache(ctx, device, index)
 	if err != nil {
-		log.Println(err)
+		return nil, err
 	}
 
 	imgBytes, err := s.LoadJpeg(user.Img.Name)

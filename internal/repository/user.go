@@ -14,8 +14,8 @@ import (
 )
 
 type IUserRepository interface {
-	DropCache(ctx context.Context, device string)
-	CreateCache(ctx context.Context, device string, users []m.UserCard)
+	DropCache(ctx context.Context, device string) error
+	CreateCache(ctx context.Context, device string, users []m.UserCard) error
 	GetUserCache(ctx context.Context, device string, index string) (*m.UserCard, error)
 
 	GetUsersByNodes(ctx context.Context, nodeIds []string) ([]m.UserCard, error)
@@ -33,7 +33,7 @@ func NewUserRepository(pgPool *pgxpool.Pool, rClient *redis.Client) *UserReposit
 	return &UserRepository{pgPool, rClient}
 }
 
-func (ur *UserRepository) DropCache(ctx context.Context, device string) {
+func (ur *UserRepository) DropCache(ctx context.Context, device string) error {
 
 	var cursor uint64
 	var keys []string
@@ -47,7 +47,7 @@ func (ur *UserRepository) DropCache(ctx context.Context, device string) {
 		// Сканируем ключи по шаблону
 		scannedKeys, cursor, err = ur.rClient.Scan(ctx, cursor, pattern, 100).Result()
 		if err != nil {
-			fmt.Printf("ошибка сканирования: %s", err)
+			return err
 		}
 
 		keys = append(keys, scannedKeys...)
@@ -62,18 +62,22 @@ func (ur *UserRepository) DropCache(ctx context.Context, device string) {
 	if len(keys) > 0 {
 		_, err := ur.rClient.Unlink(ctx, keys...).Result()
 		if err != nil {
-			fmt.Printf("ошибка удаления: %s", err)
+			return err
 		}
 	}
+	return nil
 }
 
-func (ur *UserRepository) CreateCache(ctx context.Context, device string, users []m.UserCard) {
+func (ur *UserRepository) CreateCache(ctx context.Context, device string, users []m.UserCard) error {
 
 	pipe := ur.rClient.Pipeline()
 
 	for ind, elem := range users {
 		key := fmt.Sprintf("checkbox:%s:%d", device, ind+1)
-		data, _ := json.Marshal(elem)
+		data, err := json.Marshal(elem)
+		if err != nil {
+			return err
+		}
 		pipe.Set(ctx, key, string(data), 24*time.Hour)
 	}
 
@@ -81,6 +85,7 @@ func (ur *UserRepository) CreateCache(ctx context.Context, device string, users 
 	if err != nil {
 		fmt.Println(err)
 	}
+	return nil
 }
 
 func (ur *UserRepository) GetUserCache(ctx context.Context, device string, index string) (*m.UserCard, error) {

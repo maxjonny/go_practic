@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"log"
+	"fmt"
 	m "main/internal/models"
 )
 
@@ -13,19 +13,23 @@ func (s *Service) GetUserCount(ctx context.Context, device string) (int, error) 
 
 	nodeIds, err := s.Device.GetActiveNode(ctx, device)
 	if err != nil {
-		log.Println(err)
+		return 0, fmt.Errorf("GetActiveNode: %w", err)
 	}
 
 	if len(nodeIds) > 0 {
 		users, err = s.User.GetUsersByNodes(ctx, nodeIds)
 		if err != nil {
-			log.Println(err)
+			return 0, fmt.Errorf("GetUsersByNodes: %w", err)
 		}
 	}
 
 	if len(users) > 0 {
-		s.User.DropCache(ctx, device)
-		s.User.CreateCache(ctx, device, users)
+		if err := s.User.DropCache(ctx, device); err != nil {
+			return 0, fmt.Errorf("DropCache: %w", err)
+		}
+		if err := s.User.CreateCache(ctx, device, users); err != nil {
+			return 0, fmt.Errorf("CreateCache: %w", err)
+		}
 	}
 
 	return len(users), nil

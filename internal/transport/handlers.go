@@ -16,9 +16,9 @@ import (
 )
 
 var (
-	Ok    Status = ResponceStatus{code: http.StatusOK, message: "success"}
-	Duble Status = ResponceStatus{code: http.StatusOK, message: "exists"}
-	Err   Status = ResponceStatus{code: http.StatusBadRequest, message: "error"}
+	Ok     Status = ResponceStatus{code: http.StatusOK, message: "success"}
+	Double Status = ResponceStatus{code: http.StatusOK, message: "exists"}
+	Err    Status = ResponceStatus{code: http.StatusBadRequest, message: "error"}
 )
 
 type Handler struct {
@@ -100,7 +100,8 @@ func (h *Handler) AddCardEvent(w http.ResponseWriter, r *http.Request) {
 			h.SendResponce(w, nil, Err, fmt.Errorf("SaveErrEvent: %w", err))
 			return
 		}
-		h.SendResponce(w, nil, Duble, nil)
+		log.Println("[WARN] Добавлена запись в ErrEvent")
+		h.SendResponce(w, nil, Double, nil)
 		return
 	}
 
@@ -113,7 +114,7 @@ func (h *Handler) AddCardEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isAded {
-		h.SendResponce(w, nil, Duble, nil)
+		h.SendResponce(w, nil, Double, nil)
 		return
 	}
 
@@ -122,7 +123,7 @@ func (h *Handler) AddCardEvent(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) UploadUser(w http.ResponseWriter, r *http.Request) {
 
-	h.SendResponce(w, nil, Duble, nil)
+	h.SendResponce(w, nil, Double, nil)
 
 	// var req dto.UserDto
 	// ctx := context.Background()
@@ -135,7 +136,7 @@ func (h *Handler) UploadUser(w http.ResponseWriter, r *http.Request) {
 
 	// err = json.Unmarshal(bodyBytes, &req)
 	// if err != nil || !req.IsValid() {
-	// 	h.SendResponce(w, nil, Duble, nil)
+	// 	h.SendResponce(w, nil, Double, nil)
 	// 	return
 	// }
 
@@ -148,7 +149,7 @@ func (h *Handler) UploadUser(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	// if !isAded {
-	// 	h.SendResponce(w, nil, Duble, nil)
+	// 	h.SendResponce(w, nil, Double, nil)
 	// 	return
 	// }
 
