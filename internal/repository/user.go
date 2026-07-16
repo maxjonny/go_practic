@@ -83,7 +83,7 @@ func (ur *UserRepository) CreateCache(ctx context.Context, device string, users 
 
 	_, err := pipe.Exec(ctx)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 	return nil
 }
@@ -203,7 +203,6 @@ func (ur *UserRepository) GetByGid(ctx context.Context, gID string) (int, m.User
 			return cardId, user, err
 		}
 	}
-	fmt.Println("GetId", user)
 
 	return cardId, user, nil
 }

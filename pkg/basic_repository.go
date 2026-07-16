@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"main/pkg/models"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -24,23 +23,18 @@ func InitBasicRepository(pgPool *pgxpool.Pool) *BasicRepository {
 	return &BasicRepository{pgPool}
 }
 
-func (br *BasicRepository) AddHistoryPg(Record models.History) (int, error) {
-
-	var ReturningId int
+func (br *BasicRepository) AddHistoryPg(Record models.History) (id int, err error) {
 
 	docByte, err := json.Marshal(Record.Doc)
 	if err != nil {
-		return ReturningId, err
+		return
 	}
 
 	queryString := `INSERT INTO main.history (doc, source) VALUES ($1, $2) RETURNING id`
 
-	err = br.pgPool.QueryRow(context.Background(), queryString, string(docByte), Record.Source).Scan(&ReturningId)
-	if err != nil {
-		log.Printf("Ошибка сохранения истории, %s", err)
-	}
+	err = br.pgPool.QueryRow(context.Background(), queryString, string(docByte), Record.Source).Scan(&id)
 
-	return ReturningId, err
+	return
 }
 
 func (br *BasicRepository) AddModel(table string, Record any) (id int, historyLog models.History, err error) {
@@ -55,9 +49,6 @@ func (br *BasicRepository) AddModel(table string, Record any) (id int, historyLo
 		table)
 
 	err = br.pgPool.QueryRow(context.Background(), queryString, string(docByte)).Scan(&id)
-	if err != nil {
-		log.Printf("Ошибка сохранения истории, %s", err)
-	}
 
 	historyLog = models.History{
 		Source: table,
@@ -86,9 +77,6 @@ func (br *BasicRepository) UpdatePg(table string, recordId int, record any) (id 
 	queryString := fmt.Sprintf(`UPDATE %s SET doc = $1 WHERE id = $2 RETURNING id`, table)
 
 	err = br.pgPool.QueryRow(context.Background(), queryString, string(docByte), recordId).Scan(&id)
-	if err != nil {
-		log.Printf("Ошибка обновления записи, %s", err)
-	}
 
 	historyLog = models.History{
 		Source: table,

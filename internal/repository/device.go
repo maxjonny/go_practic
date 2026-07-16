@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -88,7 +87,6 @@ func (dr *DeviceRepository) UpdateConnection(ctx context.Context, device string,
 
 	err := dr.pgPool.QueryRow(ctx, queryString, fmt.Sprintf(`"%s"`, datetime), device).Scan(&returningId)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 

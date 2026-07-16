@@ -161,7 +161,8 @@ func (h *Handler) UpdateConnect(next http.Handler) http.Handler {
 
 		device := chi.URLParam(r, "device")
 		if err := h.service.UpdateBoxStatus(context.Background(), device); err != nil {
-			h.SendResponce(w, "Unknown device: "+device, Err, fmt.Errorf("UpdateBoxStatus: %w", err))
+			log.Println("Unknown device: " + device)
+			h.SendResponce(w, nil, Err, fmt.Errorf("UpdateBoxStatus: %w", err))
 			return
 		}
 

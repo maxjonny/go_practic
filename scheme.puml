@@ -1,14 +1,28 @@
 @startuml
-CLient -> Transport : Request
-Transport -> CustomRequest: CR.Method(req)
-CustomRequest -> Repository: Rep1.Method1(req)
-Repository -> DB: Req
-Repository <- DB: Res
-CustomRequest <- Repository: Rep1.Method2(res)
-CustomRequest -> Repository: Rep2.Method1(req)
-Repository -> DB: Req
-Repository <- DB: Res
-CustomRequest <- Repository: Rep2.Method2(res)
-Transport <- CustomRequest: CR.Method(res)
-CLient <- Transport : Response
+title Схема обработки запроса
+
+actor Client
+participant Transport
+participant Service
+participant Repository
+participant DB
+
+
+
+Client -> Transport : Request
+Transport -> Service : Method(ctx, args)
+
+Service -> Repository : Method1(args)
+Repository -> DB : Query
+DB --> Repository : result
+Repository --> Service : result
+
+Service -> Repository : Method2(args)
+Repository -> DB : Query
+DB --> Repository : result
+Repository --> Service : result
+
+Service --> Transport : result, err
+Transport --> Client : Response
+
 @enduml
