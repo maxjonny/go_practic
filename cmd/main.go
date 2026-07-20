@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	api "main/internal/transport"
+	api "main/internal/transport/gql"
 
 	"github.com/joho/godotenv"
 )
@@ -29,15 +29,18 @@ func main() {
 
 	storage := db.InitStorage(ctx)
 
-	httpApp := api.CreateServer(storage)
-	httpApp.Run()
+	// httpApp := api.CreateServer(storage)
+	// httpApp.Run()
+
+	gqlApp := api.CreateServer(storage)
+	gqlApp.Run()
 
 	<-ctx.Done()
 	log.Println("Остановка сервера, закрытие соеднений")
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	httpApp.Stop(shutdownCtx)
+	gqlApp.Stop(shutdownCtx)
 	storage.CloseConnection()
 
 	log.Println("Сервер остановлен")
